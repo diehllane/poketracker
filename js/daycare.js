@@ -179,7 +179,7 @@ function recalcFromLevels() {
     const expKk = calcExpKk(start, finish);
     const price = Math.round(expKk * currentRate * 100) / 100;
     document.getElementById("dc-exp").value   = expKk + " kk";
-    document.getElementById("dc-price").value = price.toLocaleString() + " kk";
+    document.getElementById("dc-price").value = price.toLocaleString() + " k";
   } else {
     document.getElementById("dc-exp").value   = "";
     document.getElementById("dc-price").value = "";
@@ -197,7 +197,7 @@ async function loadUserRate() {
       currentRate = snap.data().daycareRate;
     }
   } catch {}
-  document.getElementById("rateDisplay").textContent = currentRate + "kk";
+  document.getElementById("rateDisplay").textContent = currentRate + "k";
   document.getElementById("rateInput").value = currentRate;
 }
 
@@ -212,7 +212,7 @@ document.getElementById("saveRateBtn").addEventListener("click", async () => {
   const val = parseFloat(document.getElementById("rateInput").value);
   if (!val || val <= 0) return;
   currentRate = val;
-  document.getElementById("rateDisplay").textContent = currentRate + "kk";
+  document.getElementById("rateDisplay").textContent = currentRate + "k";
   document.getElementById("rateEditForm").classList.add("hidden");
   try {
     await setDoc(doc(db, "users", currentUser.uid), { daycareRate: currentRate }, { merge: true });
@@ -326,7 +326,7 @@ function renderEntries(entries) {
       <td>${entry.levelStart} → ${entry.levelFinish}</td>
       <td>${entry.expKk}</td>
       <td>${entry.date}</td>
-      <td class="price-cell">${price.toLocaleString()} kk</td>
+      <td class="price-cell">${price.toLocaleString()} k</td>
       <td><button class="btn-danger" data-id="${entry.id}" title="Delete">✕</button></td>
     `;
     tbody.appendChild(tr);

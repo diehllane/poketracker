@@ -7,12 +7,13 @@ import { getAuth }        from "https://www.gstatic.com/firebasejs/10.12.2/fireb
 import { getFirestore }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey: "AIzaSyA0IbHCZJ4iR_KP8r2UO4a_imPB_f00UF0",
+  authDomain: "pno-daycare-loans.firebaseapp.com",
+  projectId: "pno-daycare-loans",
+  storageBucket: "pno-daycare-loans.firebasestorage.app",
+  messagingSenderId: "20189403333",
+  appId: "1:20189403333:web:69139bca8a51b66429b8ac",
+  measurementId: "G-M9FP07B9QV"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -23,4 +24,4 @@ export const db   = getFirestore(app);
 // ─── Admin UID ────────────────────────────────────────────────────────────────
 // After creating your admin account in Firebase Auth, paste the UID here.
 // Firebase Console → Authentication → Users → copy the UID of your admin account.
-export const ADMIN_UID = "YOUR_ADMIN_UID_HERE";
+export const ADMIN_UID = "3A08as7VmHgTsVqLuLQx7t97WSp1";

@@ -13,7 +13,8 @@ import {
   orderBy,
   getDoc,
   setDoc,
-  serverTimestamp
+  serverTimestamp,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ─── EXP Table (cumulative EXP to reach each level, from ppobuddy.com) ─────────
@@ -273,6 +274,7 @@ document.getElementById("daycareForm").addEventListener("submit", async (e) => {
       levelStart, levelFinish,
       expKk, price,
       rate: currentRate,
+      returned: false,
       createdAt: serverTimestamp()
     });
     closeModal();
@@ -316,9 +318,15 @@ function renderEntries(entries) {
   table.classList.remove("hidden");
   tbody.innerHTML = "";
 
-  entries.forEach(entry => {
+  // Active entries first (oldest date), then returned entries
+  const active   = entries.filter(e => !e.returned).sort((a, b) => a.date.localeCompare(b.date));
+  const returned = entries.filter(e => e.returned).sort((a, b) => a.date.localeCompare(b.date));
+  const sorted   = [...active, ...returned];
+
+  sorted.forEach(entry => {
     const price = Math.round(entry.expKk * currentRate * 100) / 100;
     const tr = document.createElement("tr");
+    if (entry.returned) tr.classList.add("returned");
     tr.innerHTML = `
       <td>${escHtml(entry.username)}</td>
       <td>${escHtml(entry.discord)}</td>
@@ -327,9 +335,30 @@ function renderEntries(entries) {
       <td>${entry.expKk}</td>
       <td>${entry.date}</td>
       <td class="price-cell">${price.toLocaleString()} k</td>
-      <td><button class="btn-danger" data-id="${entry.id}" title="Delete">✕</button></td>
+      <td class="no-strike">
+        <input type="checkbox" class="return-check" data-id="${entry.id}"
+          ${entry.returned ? "checked" : ""}
+          title="${entry.returned ? "Mark as not returned" : "Mark as returned"}" />
+      </td>
+      <td class="no-strike">
+        <button class="btn-danger" data-id="${entry.id}" title="Delete">✕</button>
+      </td>
     `;
     tbody.appendChild(tr);
+  });
+
+  // Return checkbox handler
+  tbody.querySelectorAll(".return-check").forEach(cb => {
+    cb.addEventListener("change", async () => {
+      try {
+        await updateDoc(doc(db, "users", currentUser.uid, "daycare", cb.dataset.id), {
+          returned: cb.checked
+        });
+      } catch (err) {
+        alert("Update failed: " + err.message);
+        cb.checked = !cb.checked;
+      }
+    });
   });
 
   tbody.querySelectorAll(".btn-danger").forEach(btn => {

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PokéTracker — Loaned Items</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+</head>
+<body class="inner-page">
+  <nav class="navbar">
+    <div class="nav-brand">
+      <a href="dashboard.html" class="nav-back">←</a>
+      <div class="pokeball-icon small"></div>
+      <span>Loaned Items</span>
+    </div>
+    <div class="nav-right">
+      <span id="navUsername" class="nav-user"></span>
+      <button id="logoutBtn" class="btn-ghost">Logout</button>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <div class="page-header">
+      <h2>Loaned Items & Pokémon</h2>
+      <button id="addLoanBtn" class="btn-primary">+ Add Loan</button>
+    </div>
+
+    <!-- Add Loan Modal -->
+    <div id="addModal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-card">
+        <h3>New Loan Entry</h3>
+        <form id="loanForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Item / Pokémon</label>
+              <input type="text" id="loan-item" placeholder="e.g. Master Ball, Charizard" required />
+            </div>
+            <div class="form-group">
+              <label>Owner</label>
+              <input type="text" id="loan-owner" placeholder="Who owns it" required />
+            </div>
+            <div class="form-group">
+              <label>Holder</label>
+              <input type="text" id="loan-holder" placeholder="Who currently has it" required />
+            </div>
+            <div class="form-group">
+              <label>Date Borrowed</label>
+              <input type="date" id="loan-date" required />
+            </div>
+          </div>
+          <div id="loanError" class="error-msg hidden"></div>
+          <div class="modal-actions">
+            <button type="submit" class="btn-primary">Add Loan</button>
+            <button type="button" id="cancelModalBtn" class="btn-ghost">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Loans Table -->
+    <div class="table-container">
+      <div id="loadingState" class="loading-state">Loading loans...</div>
+      <div id="emptyState" class="empty-state hidden">
+        <span class="empty-icon">🔄</span>
+        <p>No loans tracked yet. Add your first entry!</p>
+      </div>
+      <table id="loanTable" class="data-table hidden">
+        <thead>
+          <tr>
+            <th>Item / Pokémon</th>
+            <th>Owner</th>
+            <th>Holder</th>
+            <th>Date Borrowed</th>
+            <th>Returned</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="loanBody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/loans.js"></script>
+</body>
+</html>

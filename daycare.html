@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PokéTracker — Daycare</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+</head>
+<body class="inner-page">
+  <nav class="navbar">
+    <div class="nav-brand">
+      <a href="dashboard.html" class="nav-back">←</a>
+      <div class="pokeball-icon small"></div>
+      <span>Daycare</span>
+    </div>
+    <div class="nav-right">
+      <span id="navUsername" class="nav-user"></span>
+      <button id="logoutBtn" class="btn-ghost">Logout</button>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <div class="page-header">
+      <h2>Daycare Services</h2>
+      <div class="header-actions">
+        <div class="price-setting">
+          <label>Rate: <strong id="rateDisplay">15kk</strong> per 1kk EXP</label>
+          <button id="editRateBtn" class="btn-ghost small">Edit Rate</button>
+          <div id="rateEditForm" class="inline-edit hidden">
+            <input type="number" id="rateInput" min="1" step="1" placeholder="15" />
+            <span>kk per 1kk EXP</span>
+            <button id="saveRateBtn" class="btn-primary small">Save</button>
+            <button id="cancelRateBtn" class="btn-ghost small">Cancel</button>
+          </div>
+        </div>
+        <button id="addEntryBtn" class="btn-primary">+ Add Entry</button>
+      </div>
+    </div>
+
+    <!-- Add Entry Modal -->
+    <div id="addModal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-card">
+        <h3>New Daycare Entry</h3>
+        <form id="daycareForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" id="dc-username" placeholder="Player username" required />
+            </div>
+            <div class="form-group">
+              <label>Discord Name</label>
+              <input type="text" id="dc-discord" placeholder="Player#0000" required />
+            </div>
+            <div class="form-group">
+              <label>Pokémon</label>
+              <input type="text" id="dc-pokemon" placeholder="e.g. Dragonite" required />
+            </div>
+            <div class="form-group">
+              <label>EXP Requested (kk)</label>
+              <input type="number" id="dc-exp" min="1" step="0.01" placeholder="e.g. 100" required />
+            </div>
+            <div class="form-group">
+              <label>Received Date</label>
+              <input type="date" id="dc-date" required />
+            </div>
+            <div class="form-group">
+              <label>Price (calculated)</label>
+              <input type="text" id="dc-price" readonly class="calculated-field" placeholder="Auto-calculated" />
+            </div>
+          </div>
+          <div id="dcError" class="error-msg hidden"></div>
+          <div class="modal-actions">
+            <button type="submit" class="btn-primary">Add Entry</button>
+            <button type="button" id="cancelModalBtn" class="btn-ghost">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Entries Table -->
+    <div class="table-container">
+      <div id="loadingState" class="loading-state">Loading entries...</div>
+      <div id="emptyState" class="empty-state hidden">
+        <span class="empty-icon">🥚</span>
+        <p>No daycare entries yet. Add your first one!</p>
+      </div>
+      <table id="daycareTable" class="data-table hidden">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Discord</th>
+            <th>Pokémon</th>
+            <th>EXP (kk)</th>
+            <th>Received Date</th>
+            <th>Price (kk)</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="daycareBody"></tbody>
+      </table>
+    </div>
+
+    <div class="totals-bar" id="totalsBar">
+      <span>Total Entries: <strong id="totalEntries">0</strong></span>
+      <span>Total EXP: <strong id="totalExp">0</strong> kk</span>
+      <span>Total Earnings: <strong id="totalEarnings">0</strong> kk</span>
+    </div>
+  </main>
+
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/daycare.js"></script>
+</body>
+</html>

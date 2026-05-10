@@ -861,3 +861,95 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   resize: none;
   line-height: 1.6;
 }
+
+/* ─── Tooltip ────────────────────────────────────────────────────────────────── */
+.tooltip-anchor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--border-bright);
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  cursor: default;
+  position: relative;
+  margin-left: 5px;
+  vertical-align: middle;
+  font-family: var(--font-display);
+  font-style: normal;
+}
+.tooltip-anchor .tooltip-box {
+  display: none;
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  z-index: 300;
+  box-shadow: var(--shadow);
+  line-height: 1.7;
+  pointer-events: none;
+  font-family: var(--font-body);
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.tooltip-anchor:hover .tooltip-box,
+.tooltip-anchor:focus .tooltip-box { display: block; }
+
+/* ─── Autocomplete ───────────────────────────────────────────────────────────── */
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius);
+  z-index: 200;
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 4px 0;
+  box-shadow: var(--shadow);
+  max-height: 200px;
+  overflow-y: auto;
+}
+.autocomplete-list li {
+  padding: 7px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background 0.15s;
+}
+.autocomplete-list li:hover { background: var(--bg-hover); color: var(--accent); }
+
+/* ─── Edit button ────────────────────────────────────────────────────────────── */
+.btn-edit {
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius);
+  transition: background 0.2s;
+  margin-right: 2px;
+}
+.btn-edit:hover { background: rgba(232,200,74,0.15); }
+
+/* ─── Discord ID cell (truncate long IDs) ────────────────────────────────────── */
+.discord-id-cell {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}

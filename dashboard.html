@@ -51,6 +51,20 @@
       <h3>Account Settings</h3>
       <div class="admin-actions">
         <button id="changePasswordBtn" class="btn-secondary">Change Password</button>
+        <button id="webhookBtn" class="btn-secondary">Set Discord Webhook</button>
+      </div>
+      <div id="webhookForm" class="create-user-form hidden">
+        <p class="webhook-hint">Create a webhook in your Discord server: Channel Settings → Integrations → Webhooks → New Webhook → Copy URL</p>
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>Webhook URL</label>
+            <input type="url" id="webhookUrl" placeholder="https://discord.com/api/webhooks/..." />
+          </div>
+        </div>
+        <div id="webhookError" class="error-msg hidden"></div>
+        <div id="webhookSuccess" class="success-msg hidden"></div>
+        <button id="submitWebhook" class="btn-primary">Save Webhook</button>
+        <button id="cancelWebhook" class="btn-ghost">Cancel</button>
       </div>
       <div id="changePasswordForm" class="create-user-form hidden">
         <div class="form-row">

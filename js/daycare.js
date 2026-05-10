@@ -56,9 +56,13 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById("navUsername").textContent =
     user.displayName || user.email.split("@")[0];
 
+  console.log("Auth OK, user:", currentUser.uid);
   await loadUserRate();
+  console.log("Rate loaded:", currentRate);
   populateLevelSelects();
+  console.log("Levels populated, calling listenToEntries...");
   listenToEntries();
+  console.log("listenToEntries called");
 });
 
 document.getElementById("logoutBtn").addEventListener("click", async () => {
@@ -200,13 +204,21 @@ function listenToEntries() {
     orderBy("createdAt", "asc")
   );
 
+  console.log("Attaching snapshot listener...");
   unsubscribe = onSnapshot(q, (snap) => {
-    cachedEntries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderEntries(cachedEntries);
+    console.log("Snapshot fired, docs:", snap.docs.length);
+    try {
+      cachedEntries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      console.log("cachedEntries built:", cachedEntries.length);
+      renderEntries(cachedEntries);
+      console.log("renderEntries returned OK");
+    } catch(err) {
+      console.error("CRASH in snapshot handler:", err);
+      document.getElementById("loadingState").textContent = "Crash: " + err.message;
+    }
   }, (err) => {
-    console.error("Firestore error code:", err.code);
-    console.error("Firestore error message:", err.message);
-    document.getElementById("loadingState").textContent = "Error: " + err.message;
+    console.error("Firestore listener error:", err.code, err.message);
+    document.getElementById("loadingState").textContent = "Firestore error: " + err.message;
   });
 }
 
@@ -230,6 +242,8 @@ function _renderEntries(entries) {
   const returned = entries.filter(e => e.returned).sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   const sorted   = [...active, ...returned];
 
+  document.getElementById("loadingState").classList.add("hidden");
+  document.getElementById("daycareTable").classList.remove("hidden");
   empty.classList.toggle("hidden", entries.length > 0);
   tbody.innerHTML = "";
 

@@ -79,34 +79,25 @@ function populateLevelSelects() {
   }
 }
 
-function recalcFromLevels() {
-  const start  = parseInt(document.getElementById("dc-level-start").value);
-  const finish = parseInt(document.getElementById("dc-level-finish").value);
-  const priceEl = document.getElementById("dc-price");
+function recalcAddRow() {
+  const start    = parseInt(document.getElementById("dc-level-start").value);
+  const finish   = parseInt(document.getElementById("dc-level-finish").value);
+  const rateVal  = parseFloat(document.getElementById("dc-rate").value);
+  const rowRate  = (!isNaN(rateVal) && rateVal > 0) ? rateVal : currentRate;
+
   if (start && finish && finish > start) {
     const expKk = calcExpKk(start, finish);
-    document.getElementById("dc-exp").value = expKk + " kk";
-    // Only auto-fill price if user hasn't overridden it
-    if (!priceEl.dataset.overridden) {
-      priceEl.value = calcPrice(expKk);
-    }
+    document.getElementById("dc-exp").value   = expKk + " kk";
+    document.getElementById("dc-price").value = Math.round(expKk * rowRate * 100) / 100 + " k";
   } else {
-    document.getElementById("dc-exp").value = "";
-    if (!priceEl.dataset.overridden) priceEl.value = "";
+    document.getElementById("dc-exp").value   = "";
+    document.getElementById("dc-price").value = "";
   }
 }
 
-document.getElementById("dc-level-start").addEventListener("change", recalcFromLevels);
-document.getElementById("dc-level-finish").addEventListener("change", recalcFromLevels);
-
-// Track manual price override
-document.getElementById("dc-price").addEventListener("input", function() {
-  this.dataset.overridden = "true";
-});
-document.getElementById("dc-price").addEventListener("blur", function() {
-  // If cleared, remove override flag and let it auto-calc again
-  if (!this.value) delete this.dataset.overridden;
-});
+document.getElementById("dc-level-start").addEventListener("change", recalcAddRow);
+document.getElementById("dc-level-finish").addEventListener("change", recalcAddRow);
+document.getElementById("dc-rate").addEventListener("input", recalcAddRow);
 
 // ─── Rate management ──────────────────────────────────────────────────────────
 async function loadUserRate() {
@@ -148,7 +139,7 @@ document.getElementById("addEntryBtn").addEventListener("click", async () => {
   const date        = document.getElementById("dc-date").value;
   const levelStart  = parseInt(document.getElementById("dc-level-start").value);
   const levelFinish = parseInt(document.getElementById("dc-level-finish").value);
-  const priceRaw    = document.getElementById("dc-price").value;
+  const rateRaw  = document.getElementById("dc-rate").value;
 
   if (!username || !discord || !pokemon || !date || !levelStart || !levelFinish) {
     errEl.textContent = "All fields are required.";
@@ -161,9 +152,10 @@ document.getElementById("addEntryBtn").addEventListener("click", async () => {
     return;
   }
 
-  const expKk         = calcExpKk(levelStart, levelFinish);
-  const priceOverride = priceRaw !== "" ? parseFloat(priceRaw) : null;
-  const price         = priceOverride !== null ? priceOverride : calcPrice(expKk);
+  const expKk       = calcExpKk(levelStart, levelFinish);
+  const entryRate   = (rateRaw !== "" && parseFloat(rateRaw) > 0) ? parseFloat(rateRaw) : currentRate;
+  const rateCustom  = rateRaw !== "" && parseFloat(rateRaw) > 0;
+  const price       = Math.round(expKk * entryRate * 100) / 100;
 
   // Sort order: place at end of active entries
   const activeCount = cachedEntries.filter(e => !e.returned).length;
@@ -173,8 +165,7 @@ document.getElementById("addEntryBtn").addEventListener("click", async () => {
       username, discord, pokemon, date,
       levelStart, levelFinish,
       expKk, price,
-      priceOverride: priceOverride !== null,
-      rate: currentRate,
+      entryRate, rateCustom,
       returned: false,
       sortOrder: activeCount,
       createdAt: serverTimestamp()
@@ -193,9 +184,9 @@ function clearAddRow() {
   document.getElementById("dc-date").value        = "";
   document.getElementById("dc-level-start").value = "";
   document.getElementById("dc-level-finish").value= "";
+  document.getElementById("dc-rate").value        = "";
   document.getElementById("dc-exp").value         = "";
   document.getElementById("dc-price").value       = "";
-  delete document.getElementById("dc-price").dataset.overridden;
 }
 
 // ─── Live listener ────────────────────────────────────────────────────────────
@@ -226,7 +217,8 @@ function renderEntries(entries) {
   tbody.innerHTML = "";
 
   sorted.forEach((entry, idx) => {
-    const price    = entry.priceOverride ? entry.price : Math.round(entry.expKk * currentRate * 100) / 100;
+    const entryRate = entry.entryRate || currentRate;
+    const price     = Math.round(entry.expKk * entryRate * 100) / 100;
     const isActive = !entry.returned;
     const tr       = document.createElement("tr");
 
@@ -245,7 +237,8 @@ function renderEntries(entries) {
       <td>${entry.levelStart} → ${entry.levelFinish}</td>
       <td>${entry.expKk}</td>
       <td>${entry.date}</td>
-      <td class="price-cell ${entry.priceOverride ? "price-override-active" : ""}">${price.toLocaleString()} k</td>
+      <td class="${entry.rateCustom ? "rate-custom" : "rate-default"}">${entryRate} k</td>
+      <td class="price-cell">${price.toLocaleString()} k</td>
       <td class="no-strike">
         <input type="checkbox" class="return-check" data-id="${entry.id}"
           ${entry.returned ? "checked" : ""}
@@ -346,7 +339,7 @@ function setupDragAndDrop() {
 function updateTotals(entries) {
   const active        = entries.filter(e => !e.returned);
   const totalExp      = active.reduce((sum, e) => sum + (e.expKk || 0), 0);
-  const totalEarnings = active.reduce((sum, e) => sum + (e.priceOverride ? e.price : e.expKk * currentRate), 0);
+  const totalEarnings = active.reduce((sum, e) => sum + (e.expKk * (e.entryRate || currentRate)), 0);
   document.getElementById("totalEntries").textContent  = active.length;
   document.getElementById("totalExp").textContent      = Math.round(totalExp * 100) / 100;
   document.getElementById("totalEarnings").textContent = Math.round(totalEarnings).toLocaleString();

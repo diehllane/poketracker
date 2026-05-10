@@ -219,7 +219,11 @@ function renderEntries(entries) {
   const sorted   = [...active, ...returned];
 
   empty.classList.toggle("hidden", entries.length > 0);
+
+  // Preserve the add row across re-renders
+  const addRow = document.getElementById("addRow");
   tbody.innerHTML = "";
+  if (addRow) tbody.appendChild(addRow);
 
   sorted.forEach((entry, idx) => {
     const entryRate = entry.entryRate || currentRate;

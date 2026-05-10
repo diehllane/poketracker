@@ -378,9 +378,9 @@ function renderEntries(entries) {
           ${entry.returned ? "checked" : ""}
           title="${entry.returned ? "Mark as not returned" : "Mark as returned"}" />
       </td>
-      <td class="no-strike">
+      <td class="no-strike" style="white-space:nowrap">
         <button class="btn-edit" data-id="${entry.id}" title="Edit entry">✏️</button>
-        <button class="btn-danger" data-id="${entry.id}" title="Delete entry">✕</button>
+        <button class="btn-danger-red" data-id="${entry.id}" title="Delete entry">✕</button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -417,7 +417,7 @@ function renderEntries(entries) {
     });
   });
 
-  tbody.querySelectorAll(".btn-danger").forEach(btn => {
+  tbody.querySelectorAll(".btn-danger-red").forEach(btn => {
     btn.addEventListener("click", async () => {
       if (!confirm("Delete this daycare entry?")) return;
       try { await deleteDoc(doc(db, "users", currentUser.uid, "daycare", btn.dataset.id)); }
@@ -484,7 +484,7 @@ async function sendDiscordNotification(data) {
     `**Trainer:** ${data.username}`,
     `**Discord ID:** ${data.discord}`,
     `**Pokémon:** ${data.pokemon}`,
-    `**Levels:** ${data["level-start"]} → ${data["level-finish"]}`,
+    `**Levels:** ${data.levelStart} → ${data.levelFinish}`,
     `**Total EXP:** ${data.exp} kk`,
     `**Rate:** ${data.rate} k per 1kk EXP`,
     `**Final Price:** ${Number(data.price).toLocaleString()} k`,

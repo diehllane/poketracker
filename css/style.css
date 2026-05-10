@@ -789,3 +789,60 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transition: background 0.2s;
 }
 .btn-notify:hover { background: rgba(232,200,74,0.15); }
+
+/* ─── Add Entry Form (standalone, outside table) ─────────────────────────────── */
+.add-entry-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+.add-form-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+.add-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 110px;
+}
+.add-field label {
+  font-size: 0.72rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.add-field input,
+.add-field select {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  padding: 7px 10px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  width: 100%;
+}
+.add-field input:focus,
+.add-field select:focus {
+  outline: none;
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+.add-field input[readonly] {
+  color: var(--accent);
+  background: rgba(232,200,74,0.05);
+  cursor: default;
+}
+.add-field-levels .level-inputs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.add-field-levels select { width: 72px; }
+.add-field-btn { min-width: auto; }

@@ -193,9 +193,10 @@ function clearAddRow() {
 
 // ─── Live listener ────────────────────────────────────────────────────────────
 function listenToEntries() {
+  // Order by createdAt only — sortOrder is applied client-side
+  // This avoids composite index issues and handles entries without sortOrder
   const q = query(
     collection(db, "users", currentUser.uid, "daycare"),
-    orderBy("sortOrder", "asc"),
     orderBy("createdAt", "asc")
   );
 

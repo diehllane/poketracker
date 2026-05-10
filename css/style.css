@@ -765,3 +765,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .price-override-active {
   color: var(--green) !important;
 }
+
+/* ─── Per-entry rate column ──────────────────────────────────────────────────── */
+.rate-custom  { color: var(--green); }
+.rate-default { color: var(--text-muted); }
+.add-row .rate-input { color: var(--text-primary); }

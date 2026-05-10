@@ -35,60 +35,6 @@
             <button id="cancelRateBtn" class="btn-ghost small">Cancel</button>
           </div>
         </div>
-        <button id="addEntryBtn" class="btn-primary">+ Add Entry</button>
-      </div>
-    </div>
-
-    <!-- Add Entry Modal -->
-    <div id="addModal" class="modal hidden">
-      <div class="modal-backdrop"></div>
-      <div class="modal-card">
-        <h3>New Daycare Entry</h3>
-        <form id="daycareForm">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Username</label>
-              <input type="text" id="dc-username" placeholder="Player username" required />
-            </div>
-            <div class="form-group">
-              <label>Discord Name</label>
-              <input type="text" id="dc-discord" placeholder="Player#0000" required />
-            </div>
-            <div class="form-group">
-              <label>Pokémon</label>
-              <input type="text" id="dc-pokemon" placeholder="e.g. Dragonite" required />
-            </div>
-            <div class="form-group">
-              <label>Received Date</label>
-              <input type="date" id="dc-date" required />
-            </div>
-            <div class="form-group">
-              <label>Level Start</label>
-              <select id="dc-level-start" required>
-                <option value="">— Select —</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Level Finish</label>
-              <select id="dc-level-finish" required>
-                <option value="">— Select —</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>EXP Required (kk)</label>
-              <input type="text" id="dc-exp" readonly class="calculated-field" placeholder="Auto-calculated" />
-            </div>
-            <div class="form-group">
-              <label>Price (k)</label>
-              <input type="text" id="dc-price" readonly class="calculated-field" placeholder="Auto-calculated" />
-            </div>
-          </div>
-          <div id="dcError" class="error-msg hidden"></div>
-          <div class="modal-actions">
-            <button type="submit" class="btn-primary">Add Entry</button>
-            <button type="button" id="cancelModalBtn" class="btn-ghost">Cancel</button>
-          </div>
-        </form>
       </div>
     </div>
 
@@ -97,11 +43,12 @@
       <div id="loadingState" class="loading-state">Loading entries...</div>
       <div id="emptyState" class="empty-state hidden">
         <span class="empty-icon">🥚</span>
-        <p>No daycare entries yet. Add your first one!</p>
+        <p>No daycare entries yet. Use the row below to add your first one!</p>
       </div>
       <table id="daycareTable" class="data-table hidden">
         <thead>
           <tr>
+            <th class="col-drag"></th>
             <th>Username</th>
             <th>Discord</th>
             <th>Pokémon</th>
@@ -112,10 +59,32 @@
             <th>Returned</th>
             <th>Actions</th>
           </tr>
+          <!-- Inline add row -->
+          <tr id="addRow" class="add-row">
+            <td></td>
+            <td><input type="text" id="dc-username" placeholder="Username" /></td>
+            <td><input type="text" id="dc-discord" placeholder="Discord" /></td>
+            <td><input type="text" id="dc-pokemon" placeholder="Pokémon" /></td>
+            <td class="level-inputs">
+              <select id="dc-level-start"><option value="">From</option></select>
+              <span>→</span>
+              <select id="dc-level-finish"><option value="">To</option></select>
+            </td>
+            <td><input type="text" id="dc-exp" readonly class="calculated-field" placeholder="Auto" /></td>
+            <td><input type="date" id="dc-date" /></td>
+            <td><input type="number" id="dc-price" class="price-override" placeholder="Auto" step="0.01" /></td>
+            <td></td>
+            <td>
+              <button id="addEntryBtn" class="btn-primary small">Add</button>
+            </td>
+          </tr>
         </thead>
         <tbody id="daycareBody"></tbody>
       </table>
+      <!-- Show table immediately so add row is visible -->
     </div>
+
+    <div id="dcError" class="error-msg hidden" style="margin: 8px 0;"></div>
 
     <div class="totals-bar" id="totalsBar">
       <span>Total Entries: <strong id="totalEntries">0</strong></span>

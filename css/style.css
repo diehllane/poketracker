@@ -967,3 +967,36 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transition: background 0.2s;
 }
 .btn-danger-red:hover { background: rgba(232,74,74,0.35); }
+
+/* ─── Daycare table overflow fix ─────────────────────────────────────────────── */
+#daycareTable {
+  min-width: 900px;
+}
+.table-container {
+  overflow-x: auto;
+}
+#daycareTable .col-drag { width: 28px; min-width: 28px; }
+#daycareTable th:nth-child(2),
+#daycareTable td:nth-child(2) { min-width: 90px; }   /* Username */
+#daycareTable th:nth-child(3),
+#daycareTable td:nth-child(3) { min-width: 90px; max-width: 110px; } /* Discord ID */
+#daycareTable th:nth-child(4),
+#daycareTable td:nth-child(4) { min-width: 80px; }   /* Pokémon */
+#daycareTable th:nth-child(5),
+#daycareTable td:nth-child(5) { min-width: 70px; }   /* Levels */
+#daycareTable th:nth-child(6),
+#daycareTable td:nth-child(6) { min-width: 60px; }   /* EXP */
+#daycareTable th:nth-child(7),
+#daycareTable td:nth-child(7) { min-width: 90px; }   /* Date */
+#daycareTable th:nth-child(8),
+#daycareTable td:nth-child(8) { min-width: 55px; }   /* Rate */
+#daycareTable th:nth-child(9),
+#daycareTable td:nth-child(9) { min-width: 65px; }   /* Price */
+#daycareTable th:nth-child(10),
+#daycareTable td:nth-child(10) { min-width: 62px; text-align: center; } /* Complete */
+#daycareTable th:nth-child(11),
+#daycareTable td:nth-child(11) { min-width: 50px; text-align: center; } /* Notify */
+#daycareTable th:nth-child(12),
+#daycareTable td:nth-child(12) { min-width: 62px; text-align: center; } /* Returned */
+#daycareTable th:nth-child(13),
+#daycareTable td:nth-child(13) { min-width: 75px; text-align: center; } /* Actions */

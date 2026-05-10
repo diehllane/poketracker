@@ -38,12 +38,59 @@
       </div>
     </div>
 
+    <!-- Add Entry Form (outside the table so renders never destroy it) -->
+    <div class="add-entry-form">
+      <div class="add-form-fields">
+        <div class="add-field">
+          <label>Username</label>
+          <input type="text" id="dc-username" placeholder="Username" />
+        </div>
+        <div class="add-field">
+          <label>Discord</label>
+          <input type="text" id="dc-discord" placeholder="Discord" />
+        </div>
+        <div class="add-field">
+          <label>Pokémon</label>
+          <input type="text" id="dc-pokemon" placeholder="Pokémon" />
+        </div>
+        <div class="add-field add-field-levels">
+          <label>Levels</label>
+          <div class="level-inputs">
+            <select id="dc-level-start"><option value="">From</option></select>
+            <span>→</span>
+            <select id="dc-level-finish"><option value="">To</option></select>
+          </div>
+        </div>
+        <div class="add-field">
+          <label>EXP (kk)</label>
+          <input type="text" id="dc-exp" readonly class="calculated-field" placeholder="Auto" />
+        </div>
+        <div class="add-field">
+          <label>Date</label>
+          <input type="date" id="dc-date" />
+        </div>
+        <div class="add-field">
+          <label>Rate (k)</label>
+          <input type="number" id="dc-rate" placeholder="Default" step="0.01" min="0" />
+        </div>
+        <div class="add-field">
+          <label>Price (k)</label>
+          <input type="text" id="dc-price" readonly class="calculated-field" placeholder="Auto" />
+        </div>
+        <div class="add-field add-field-btn">
+          <label>&nbsp;</label>
+          <button id="addEntryBtn" class="btn-primary">+ Add</button>
+        </div>
+      </div>
+      <div id="dcError" class="error-msg hidden"></div>
+    </div>
+
     <!-- Entries Table -->
     <div class="table-container">
       <div id="loadingState" class="loading-state">Loading entries...</div>
       <div id="emptyState" class="empty-state hidden">
         <span class="empty-icon">🥚</span>
-        <p>No daycare entries yet. Use the row below to add your first one!</p>
+        <p>No daycare entries yet. Use the form above to add your first one!</p>
       </div>
       <table id="daycareTable" class="data-table hidden">
         <thead>
@@ -63,35 +110,9 @@
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody id="daycareBody">
-          <!-- Inline add row -->
-          <tr id="addRow" class="add-row">
-            <td></td>
-            <td><input type="text" id="dc-username" placeholder="Username" /></td>
-            <td><input type="text" id="dc-discord" placeholder="Discord" /></td>
-            <td><input type="text" id="dc-pokemon" placeholder="Pokémon" /></td>
-            <td class="level-inputs">
-              <select id="dc-level-start"><option value="">From</option></select>
-              <span>→</span>
-              <select id="dc-level-finish"><option value="">To</option></select>
-            </td>
-            <td><input type="text" id="dc-exp" readonly class="calculated-field" placeholder="Auto" /></td>
-            <td><input type="date" id="dc-date" /></td>
-            <td><input type="number" id="dc-rate" class="rate-input" placeholder="Default" step="0.01" min="0" /></td>
-            <td><input type="text" id="dc-price" readonly class="calculated-field" placeholder="Auto" /></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td>
-              <button id="addEntryBtn" class="btn-primary small">Add</button>
-            </td>
-          </tr>
-        </tbody>
+        <tbody id="daycareBody"></tbody>
       </table>
-      <!-- Show table immediately so add row is visible -->
     </div>
-
-    <div id="dcError" class="error-msg hidden" style="margin: 8px 0;"></div>
 
     <div class="totals-bar" id="totalsBar">
       <span>Total Entries: <strong id="totalEntries">0</strong></span>

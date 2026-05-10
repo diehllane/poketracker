@@ -212,6 +212,12 @@ function listenToEntries() {
 
 // ─── Render ───────────────────────────────────────────────────────────────────
 function renderEntries(entries) {
+  try { _renderEntries(entries); } catch(err) {
+    console.error("renderEntries crashed:", err);
+    document.getElementById("loadingState").textContent = "Render error: " + err.message;
+  }
+}
+function _renderEntries(entries) {
   const empty = document.getElementById("emptyState");
   const tbody = document.getElementById("daycareBody");
 

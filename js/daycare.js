@@ -203,6 +203,10 @@ function listenToEntries() {
   unsubscribe = onSnapshot(q, (snap) => {
     cachedEntries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderEntries(cachedEntries);
+  }, (err) => {
+    console.error("Firestore error code:", err.code);
+    console.error("Firestore error message:", err.message);
+    document.getElementById("loadingState").textContent = "Error: " + err.message;
   });
 }
 

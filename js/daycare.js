@@ -201,6 +201,9 @@ function listenToEntries() {
   );
 
   unsubscribe = onSnapshot(q, (snap) => {
+    console.log("Snapshot received. Doc count:", snap.docs.length);
+    console.log("Current user UID:", currentUser.uid);
+    snap.docs.forEach(d => console.log("Doc ID:", d.id, "Data:", JSON.stringify(d.data())));
     cachedEntries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderEntries(cachedEntries);
   }, (err) => {

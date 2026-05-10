@@ -55,6 +55,7 @@
             <th>Levels</th>
             <th>EXP (kk)</th>
             <th>Received Date</th>
+            <th>Rate (k)</th>
             <th>Price (k)</th>
             <th>Returned</th>
             <th>Actions</th>
@@ -72,7 +73,8 @@
             </td>
             <td><input type="text" id="dc-exp" readonly class="calculated-field" placeholder="Auto" /></td>
             <td><input type="date" id="dc-date" /></td>
-            <td><input type="number" id="dc-price" class="price-override" placeholder="Auto" step="0.01" /></td>
+            <td><input type="number" id="dc-rate" class="rate-input" placeholder="Default" step="0.01" min="0" /></td>
+            <td><input type="text" id="dc-price" readonly class="calculated-field" placeholder="Auto" /></td>
             <td></td>
             <td>
               <button id="addEntryBtn" class="btn-primary small">Add</button>

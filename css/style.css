@@ -702,3 +702,66 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   text-align: center;
 }
 .btn-link:hover { color: var(--accent); }
+
+/* ─── Inline add row ─────────────────────────────────────────────────────────── */
+.add-row td {
+  padding: 8px 6px;
+  background: var(--bg-elevated);
+  border-bottom: 2px solid var(--accent-dim);
+}
+.add-row input,
+.add-row select {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  padding: 5px 8px;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  width: 100%;
+  min-width: 0;
+}
+.add-row input:focus,
+.add-row select:focus {
+  outline: none;
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+.add-row input[readonly] {
+  color: var(--accent);
+  background: rgba(232,200,74,0.05);
+  cursor: default;
+}
+.add-row .price-override {
+  color: var(--text-primary);
+  background: var(--bg-deep);
+}
+.level-inputs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.level-inputs select { width: 70px; }
+.level-inputs span { color: var(--text-dim); flex-shrink: 0; }
+.col-drag { width: 28px; }
+
+/* ─── Drag and drop ──────────────────────────────────────────────────────────── */
+.drag-handle {
+  cursor: grab;
+  color: var(--text-dim);
+  font-size: 1rem;
+  text-align: center;
+  user-select: none;
+  padding: 0 4px !important;
+}
+.drag-handle:active { cursor: grabbing; }
+.no-drag { cursor: default; }
+.dragging { opacity: 0.4; }
+.drag-over td { border-top: 2px solid var(--accent) !important; }
+.draggable-row { cursor: default; }
+
+/* ─── Price override indicator ───────────────────────────────────────────────── */
+.price-override-active {
+  color: var(--green) !important;
+}

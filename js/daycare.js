@@ -47,6 +47,7 @@ let currentRate   = 15;
 let unsubscribe   = null;
 let cachedEntries = [];
 let dragSrcId     = null;
+let webhookUrl    = "";
 
 // ─── Auth guard ───────────────────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
@@ -103,7 +104,10 @@ document.getElementById("dc-rate").addEventListener("input", recalcAddRow);
 async function loadUserRate() {
   try {
     const snap = await getDoc(doc(db, "users", currentUser.uid));
-    if (snap.exists() && snap.data().daycareRate) currentRate = snap.data().daycareRate;
+    if (snap.exists()) {
+      if (snap.data().daycareRate) currentRate = snap.data().daycareRate;
+      if (snap.data().webhookUrl) webhookUrl = snap.data().webhookUrl;
+    }
   } catch {}
   document.getElementById("rateDisplay").textContent = currentRate + "k";
   document.getElementById("rateInput").value = currentRate;
@@ -166,6 +170,7 @@ document.getElementById("addEntryBtn").addEventListener("click", async () => {
       levelStart, levelFinish,
       expKk, price,
       entryRate, rateCustom,
+      completed: false,
       returned: false,
       sortOrder: activeCount,
       createdAt: serverTimestamp()
@@ -240,6 +245,31 @@ function renderEntries(entries) {
       <td class="${entry.rateCustom ? "rate-custom" : "rate-default"}">${entryRate} k</td>
       <td class="price-cell">${price.toLocaleString()} k</td>
       <td class="no-strike">
+        <input type="checkbox" class="complete-check" data-id="${entry.id}"
+          data-username="${escHtml(entry.username)}"
+          data-discord="${escHtml(entry.discord)}"
+          data-pokemon="${escHtml(entry.pokemon)}"
+          data-level-start="${entry.levelStart}"
+          data-level-finish="${entry.levelFinish}"
+          data-exp="${entry.expKk}"
+          data-rate="${entryRate}"
+          data-price="${price}"
+          ${entry.completed ? "checked" : ""}
+          title="Mark as complete" />
+      </td>
+      <td class="no-strike">
+        <button class="btn-notify ${entry.completed ? "" : "hidden"}" data-id="${entry.id}"
+          data-username="${escHtml(entry.username)}"
+          data-discord="${escHtml(entry.discord)}"
+          data-pokemon="${escHtml(entry.pokemon)}"
+          data-level-start="${entry.levelStart}"
+          data-level-finish="${entry.levelFinish}"
+          data-exp="${entry.expKk}"
+          data-rate="${entryRate}"
+          data-price="${price}"
+          title="Send Discord notification">📨</button>
+      </td>
+      <td class="no-strike">
         <input type="checkbox" class="return-check" data-id="${entry.id}"
           ${entry.returned ? "checked" : ""}
           title="${entry.returned ? "Mark as not returned" : "Mark as returned"}" />
@@ -253,6 +283,25 @@ function renderEntries(entries) {
 
   // Drag-and-drop
   setupDragAndDrop();
+
+  // Complete checkbox
+  tbody.querySelectorAll(".complete-check").forEach(cb => {
+    cb.addEventListener("change", async () => {
+      try {
+        await updateDoc(doc(db, "users", currentUser.uid, "daycare", cb.dataset.id), {
+          completed: cb.checked
+        });
+      } catch (err) {
+        alert("Update failed: " + err.message);
+        cb.checked = !cb.checked;
+      }
+    });
+  });
+
+  // Notify button
+  tbody.querySelectorAll(".btn-notify").forEach(btn => {
+    btn.addEventListener("click", () => sendDiscordNotification(btn.dataset));
+  });
 
   // Return checkbox
   tbody.querySelectorAll(".return-check").forEach(cb => {
@@ -343,6 +392,44 @@ function updateTotals(entries) {
   document.getElementById("totalEntries").textContent  = active.length;
   document.getElementById("totalExp").textContent      = Math.round(totalExp * 100) / 100;
   document.getElementById("totalEarnings").textContent = Math.round(totalEarnings).toLocaleString();
+}
+
+// ─── Discord Webhook ──────────────────────────────────────────────────────────
+async function sendDiscordNotification(data) {
+  if (!webhookUrl) {
+    alert("No Discord webhook URL configured.\nGo to the Dashboard → Account Settings to add your webhook URL.");
+    return;
+  }
+
+  const embed = {
+    title: "✅ Daycare Complete",
+    color: 0xe8c84a,
+    fields: [
+      { name: "In-Game Username", value: data.username,                   inline: true  },
+      { name: "Discord",          value: data.discord,                    inline: true  },
+      { name: "Pokémon",          value: data.pokemon,                    inline: true  },
+      { name: "Levels",           value: `${data.levelStart} → ${data.levelFinish}`, inline: true },
+      { name: "Total EXP",        value: `${data.exp} kk`,               inline: true  },
+      { name: "Rate",             value: `${data.rate} k per 1kk EXP`,   inline: true  },
+      { name: "Final Price",      value: `${Number(data.price).toLocaleString()} k`, inline: false },
+    ],
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    const res = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embeds: [embed] })
+    });
+    if (res.ok) {
+      alert("Notification sent to Discord!");
+    } else {
+      alert("Discord returned an error. Check your webhook URL.");
+    }
+  } catch (err) {
+    alert("Failed to send notification: " + err.message);
+  }
 }
 
 function escHtml(str) {

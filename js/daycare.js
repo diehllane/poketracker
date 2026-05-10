@@ -13,133 +13,40 @@ import {
   orderBy,
   getDoc,
   setDoc,
+  updateDoc,
   serverTimestamp,
-  updateDoc
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ─── EXP Table (cumulative EXP to reach each level, from ppobuddy.com) ─────────
-// Index = level. expTable[n] = total EXP needed to BE at level n from level 1.
-// EXP to go from level A to B = expTable[B] - expTable[A]
 const expTable = [
   0,        // L0 placeholder
   0,        // L1 (start)
-  139,
-  298,
-  477,
-  677,
-  899,
-  1147,
-  1425,
-  1741,
-  2104,
-  2526,
-  3022,
-  3612,
-  4319,
-  5171,
-  6200,
-  7444,
-  8946,
-  10754,
-  12924,
-  15518,
-  18604,
-  22259,
-  26567,
-  31620,
-  37519,
-  44373,
-  52301,
-  61432,
-  71905,
-  83868,
-  97481,
-  112916,
-  130355,
-  149992,
-  172035,
-  196702,
-  224227,
-  254855,
-  288846,
-  326474,
-  368028,
-  413901,
-  464232,
-  519445,
-  579891,
-  645937,
-  717967,
-  796382,
-  881601,
-  974060,
-  1074214,
-  1182537,
-  1299522,
-  1425680,
-  1561544,
-  1707667,
-  1864621,
-  2033000,
-  2213419,
-  2406516,
-  2612949,
-  2833400,
-  3068573,
-  3319197,
-  3586022,
-  3869824,
-  4171402,
-  4491581,
-  4831210,
-  5191165,
-  5572346,
-  5975680,
-  6402122,
-  6852652,
-  7328278,
-  7830037,
-  8358992,
-  8916236,
-  9502891,
-  10120108,
-  10769067,
-  11450978,
-  12167083,
-  12918653,
-  13706991,
-  14533432,
-  15399342,
-  16306119,
-  17255195,
-  18248034,
-  19286134,
-  20371026,
-  21504276,
-  22687485,
-  23922287,
-  25210353,
-  26553390,
-  27953140,
-  29411381   // L100
+  139,298,477,677,899,1147,1425,1741,2104,
+  2526,3022,3612,4319,5171,6200,7444,8946,10754,12924,
+  15518,18604,22259,26567,31620,37519,44373,52301,61432,71905,
+  83868,97481,112916,130355,149992,172035,196702,224227,254855,288846,
+  326474,368028,413901,464232,519445,579891,645937,717967,796382,881601,
+  974060,1074214,1182537,1299522,1425680,1561544,1707667,1864621,2033000,2213419,
+  2406516,2612949,2833400,3068573,3319197,3586022,3869824,4171402,4491581,4831210,
+  5191165,5572346,5975680,6402122,6852652,7328278,7830037,8358992,8916236,9502891,
+  10120108,10769067,11450978,12167083,12918653,13706991,14533432,15399342,16306119,17255195,
+  18248034,19286134,20371026,21504276,22687485,23922287,25210353,26553390,27953140,29411381
 ];
 
-// Convert raw EXP to kk (millions), rounded to 2 decimal places
-function toKk(exp) {
-  return Math.round((exp / 1000000) * 100) / 100;
-}
-
-// EXP needed to go from levelStart to levelFinish, in kk
+function toKk(exp) { return Math.round((exp / 1000000) * 100) / 100; }
 function calcExpKk(start, finish) {
   if (finish <= start || start < 1 || finish > 100) return 0;
   return toKk(expTable[finish] - expTable[start]);
 }
+function calcPrice(expKk) { return Math.round(expKk * currentRate * 100) / 100; }
 
 // ─── State ────────────────────────────────────────────────────────────────────
-let currentUser = null;
-let currentRate = 15;
-let unsubscribe = null;
+let currentUser   = null;
+let currentRate   = 15;
+let unsubscribe   = null;
 let cachedEntries = [];
+let dragSrcId     = null;
 
 // ─── Auth guard ───────────────────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
@@ -150,6 +57,9 @@ onAuthStateChanged(auth, async (user) => {
 
   await loadUserRate();
   populateLevelSelects();
+  // Show table immediately so add row is visible
+  document.getElementById("daycareTable").classList.remove("hidden");
+  document.getElementById("loadingState").classList.add("hidden");
   listenToEntries();
 });
 
@@ -163,40 +73,46 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
 function populateLevelSelects() {
   const startSel  = document.getElementById("dc-level-start");
   const finishSel = document.getElementById("dc-level-finish");
-
   for (let i = 1; i <= 100; i++) {
-    const o1 = new Option(`Level ${i}`, i);
-    const o2 = new Option(`Level ${i}`, i);
-    startSel.appendChild(o1);
-    finishSel.appendChild(o2);
+    startSel.appendChild(new Option(`${i}`, i));
+    finishSel.appendChild(new Option(`${i}`, i));
   }
 }
 
 function recalcFromLevels() {
   const start  = parseInt(document.getElementById("dc-level-start").value);
   const finish = parseInt(document.getElementById("dc-level-finish").value);
-
+  const priceEl = document.getElementById("dc-price");
   if (start && finish && finish > start) {
     const expKk = calcExpKk(start, finish);
-    const price = Math.round(expKk * currentRate * 100) / 100;
-    document.getElementById("dc-exp").value   = expKk + " kk";
-    document.getElementById("dc-price").value = price.toLocaleString() + " k";
+    document.getElementById("dc-exp").value = expKk + " kk";
+    // Only auto-fill price if user hasn't overridden it
+    if (!priceEl.dataset.overridden) {
+      priceEl.value = calcPrice(expKk);
+    }
   } else {
-    document.getElementById("dc-exp").value   = "";
-    document.getElementById("dc-price").value = "";
+    document.getElementById("dc-exp").value = "";
+    if (!priceEl.dataset.overridden) priceEl.value = "";
   }
 }
 
 document.getElementById("dc-level-start").addEventListener("change", recalcFromLevels);
 document.getElementById("dc-level-finish").addEventListener("change", recalcFromLevels);
 
+// Track manual price override
+document.getElementById("dc-price").addEventListener("input", function() {
+  this.dataset.overridden = "true";
+});
+document.getElementById("dc-price").addEventListener("blur", function() {
+  // If cleared, remove override flag and let it auto-calc again
+  if (!this.value) delete this.dataset.overridden;
+});
+
 // ─── Rate management ──────────────────────────────────────────────────────────
 async function loadUserRate() {
   try {
     const snap = await getDoc(doc(db, "users", currentUser.uid));
-    if (snap.exists() && snap.data().daycareRate) {
-      currentRate = snap.data().daycareRate;
-    }
+    if (snap.exists() && snap.data().daycareRate) currentRate = snap.data().daycareRate;
   } catch {}
   document.getElementById("rateDisplay").textContent = currentRate + "k";
   document.getElementById("rateInput").value = currentRate;
@@ -221,29 +137,8 @@ document.getElementById("saveRateBtn").addEventListener("click", async () => {
   renderEntries(cachedEntries);
 });
 
-// ─── Modal ────────────────────────────────────────────────────────────────────
-const modal     = document.getElementById("addModal");
-const addBtn    = document.getElementById("addEntryBtn");
-const cancelBtn = document.getElementById("cancelModalBtn");
-
-addBtn.addEventListener("click", () => {
-  modal.classList.remove("hidden");
-  document.getElementById("daycareForm").reset();
-  document.getElementById("dc-date").value = new Date().toISOString().split("T")[0];
-  document.getElementById("dc-exp").value   = "";
-  document.getElementById("dc-price").value = "";
-});
-cancelBtn.addEventListener("click", closeModal);
-document.querySelector(".modal-backdrop").addEventListener("click", closeModal);
-
-function closeModal() {
-  modal.classList.add("hidden");
-  document.getElementById("dcError").classList.add("hidden");
-}
-
-// ─── Submit ───────────────────────────────────────────────────────────────────
-document.getElementById("daycareForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
+// ─── Add entry (inline row) ───────────────────────────────────────────────────
+document.getElementById("addEntryBtn").addEventListener("click", async () => {
   const errEl = document.getElementById("dcError");
   errEl.classList.add("hidden");
 
@@ -253,6 +148,7 @@ document.getElementById("daycareForm").addEventListener("submit", async (e) => {
   const date        = document.getElementById("dc-date").value;
   const levelStart  = parseInt(document.getElementById("dc-level-start").value);
   const levelFinish = parseInt(document.getElementById("dc-level-finish").value);
+  const priceRaw    = document.getElementById("dc-price").value;
 
   if (!username || !discord || !pokemon || !date || !levelStart || !levelFinish) {
     errEl.textContent = "All fields are required.";
@@ -265,30 +161,48 @@ document.getElementById("daycareForm").addEventListener("submit", async (e) => {
     return;
   }
 
-  const expKk = calcExpKk(levelStart, levelFinish);
-  const price = Math.round(expKk * currentRate * 100) / 100;
+  const expKk         = calcExpKk(levelStart, levelFinish);
+  const priceOverride = priceRaw !== "" ? parseFloat(priceRaw) : null;
+  const price         = priceOverride !== null ? priceOverride : calcPrice(expKk);
+
+  // Sort order: place at end of active entries
+  const activeCount = cachedEntries.filter(e => !e.returned).length;
 
   try {
     await addDoc(collection(db, "users", currentUser.uid, "daycare"), {
       username, discord, pokemon, date,
       levelStart, levelFinish,
       expKk, price,
+      priceOverride: priceOverride !== null,
       rate: currentRate,
       returned: false,
+      sortOrder: activeCount,
       createdAt: serverTimestamp()
     });
-    closeModal();
+    clearAddRow();
   } catch (err) {
     errEl.textContent = "Failed to save: " + err.message;
     errEl.classList.remove("hidden");
   }
 });
 
+function clearAddRow() {
+  document.getElementById("dc-username").value    = "";
+  document.getElementById("dc-discord").value     = "";
+  document.getElementById("dc-pokemon").value     = "";
+  document.getElementById("dc-date").value        = "";
+  document.getElementById("dc-level-start").value = "";
+  document.getElementById("dc-level-finish").value= "";
+  document.getElementById("dc-exp").value         = "";
+  document.getElementById("dc-price").value       = "";
+  delete document.getElementById("dc-price").dataset.overridden;
+}
+
 // ─── Live listener ────────────────────────────────────────────────────────────
 function listenToEntries() {
   const q = query(
     collection(db, "users", currentUser.uid, "daycare"),
-    orderBy("date", "asc"),
+    orderBy("sortOrder", "asc"),
     orderBy("createdAt", "asc")
   );
 
@@ -300,41 +214,38 @@ function listenToEntries() {
 
 // ─── Render ───────────────────────────────────────────────────────────────────
 function renderEntries(entries) {
-  const loading = document.getElementById("loadingState");
-  const empty   = document.getElementById("emptyState");
-  const table   = document.getElementById("daycareTable");
-  const tbody   = document.getElementById("daycareBody");
+  const empty = document.getElementById("emptyState");
+  const tbody = document.getElementById("daycareBody");
 
-  loading.classList.add("hidden");
-
-  if (entries.length === 0) {
-    empty.classList.remove("hidden");
-    table.classList.add("hidden");
-    updateTotals(entries);
-    return;
-  }
-
-  empty.classList.add("hidden");
-  table.classList.remove("hidden");
-  tbody.innerHTML = "";
-
-  // Active entries first (oldest date), then returned entries
-  const active   = entries.filter(e => !e.returned).sort((a, b) => a.date.localeCompare(b.date));
+  // Active first by sortOrder, then returned
+  const active   = entries.filter(e => !e.returned).sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
   const returned = entries.filter(e => e.returned).sort((a, b) => a.date.localeCompare(b.date));
   const sorted   = [...active, ...returned];
 
-  sorted.forEach(entry => {
-    const price = Math.round(entry.expKk * currentRate * 100) / 100;
-    const tr = document.createElement("tr");
+  empty.classList.toggle("hidden", entries.length > 0);
+  tbody.innerHTML = "";
+
+  sorted.forEach((entry, idx) => {
+    const price    = entry.priceOverride ? entry.price : Math.round(entry.expKk * currentRate * 100) / 100;
+    const isActive = !entry.returned;
+    const tr       = document.createElement("tr");
+
     if (entry.returned) tr.classList.add("returned");
+    if (isActive) {
+      tr.draggable = true;
+      tr.dataset.id = entry.id;
+      tr.classList.add("draggable-row");
+    }
+
     tr.innerHTML = `
+      <td class="drag-handle ${isActive ? "" : "no-drag"}">${isActive ? "⠿" : ""}</td>
       <td>${escHtml(entry.username)}</td>
       <td>${escHtml(entry.discord)}</td>
       <td>${escHtml(entry.pokemon)}</td>
       <td>${entry.levelStart} → ${entry.levelFinish}</td>
       <td>${entry.expKk}</td>
       <td>${entry.date}</td>
-      <td class="price-cell">${price.toLocaleString()} k</td>
+      <td class="price-cell ${entry.priceOverride ? "price-override-active" : ""}">${price.toLocaleString()} k</td>
       <td class="no-strike">
         <input type="checkbox" class="return-check" data-id="${entry.id}"
           ${entry.returned ? "checked" : ""}
@@ -347,13 +258,22 @@ function renderEntries(entries) {
     tbody.appendChild(tr);
   });
 
-  // Return checkbox handler
+  // Drag-and-drop
+  setupDragAndDrop();
+
+  // Return checkbox
   tbody.querySelectorAll(".return-check").forEach(cb => {
     cb.addEventListener("change", async () => {
       try {
-        await updateDoc(doc(db, "users", currentUser.uid, "daycare", cb.dataset.id), {
-          returned: cb.checked
-        });
+        // If marking returned, clear sortOrder; if unreturning, assign to end
+        const updates = { returned: cb.checked };
+        if (cb.checked) {
+          updates.sortOrder = 9999;
+        } else {
+          const activeCount = cachedEntries.filter(e => !e.returned).length;
+          updates.sortOrder = activeCount;
+        }
+        await updateDoc(doc(db, "users", currentUser.uid, "daycare", cb.dataset.id), updates);
       } catch (err) {
         alert("Update failed: " + err.message);
         cb.checked = !cb.checked;
@@ -361,6 +281,7 @@ function renderEntries(entries) {
     });
   });
 
+  // Delete
   tbody.querySelectorAll(".btn-danger").forEach(btn => {
     btn.addEventListener("click", async () => {
       if (!confirm("Delete this daycare entry?")) return;
@@ -373,10 +294,60 @@ function renderEntries(entries) {
   updateTotals(entries);
 }
 
+// ─── Drag and drop ────────────────────────────────────────────────────────────
+function setupDragAndDrop() {
+  const tbody = document.getElementById("daycareBody");
+  const rows  = [...tbody.querySelectorAll(".draggable-row")];
+
+  rows.forEach(row => {
+    row.addEventListener("dragstart", e => {
+      dragSrcId = row.dataset.id;
+      row.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+    });
+    row.addEventListener("dragend", () => {
+      row.classList.remove("dragging");
+      tbody.querySelectorAll(".drag-over").forEach(r => r.classList.remove("drag-over"));
+    });
+    row.addEventListener("dragover", e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      tbody.querySelectorAll(".drag-over").forEach(r => r.classList.remove("drag-over"));
+      if (row.dataset.id !== dragSrcId) row.classList.add("drag-over");
+    });
+    row.addEventListener("drop", async e => {
+      e.preventDefault();
+      const targetId = row.dataset.id;
+      if (!dragSrcId || dragSrcId === targetId) return;
+
+      // Rebuild order based on current DOM order after drop
+      const activeRows = [...tbody.querySelectorAll(".draggable-row")];
+      const ids        = activeRows.map(r => r.dataset.id);
+      const srcIdx     = ids.indexOf(dragSrcId);
+      const tgtIdx     = ids.indexOf(targetId);
+
+      // Reorder array
+      ids.splice(srcIdx, 1);
+      ids.splice(tgtIdx, 0, dragSrcId);
+
+      // Write new sortOrder values to Firestore in a batch
+      try {
+        const batch = writeBatch(db);
+        ids.forEach((id, i) => {
+          batch.update(doc(db, "users", currentUser.uid, "daycare", id), { sortOrder: i });
+        });
+        await batch.commit();
+      } catch (err) { alert("Reorder failed: " + err.message); }
+    });
+  });
+}
+
+// ─── Totals ───────────────────────────────────────────────────────────────────
 function updateTotals(entries) {
-  const totalExp      = entries.reduce((sum, e) => sum + (e.expKk || 0), 0);
-  const totalEarnings = entries.reduce((sum, e) => sum + (e.expKk * currentRate), 0);
-  document.getElementById("totalEntries").textContent  = entries.length;
+  const active        = entries.filter(e => !e.returned);
+  const totalExp      = active.reduce((sum, e) => sum + (e.expKk || 0), 0);
+  const totalEarnings = active.reduce((sum, e) => sum + (e.priceOverride ? e.price : e.expKk * currentRate), 0);
+  document.getElementById("totalEntries").textContent  = active.length;
   document.getElementById("totalExp").textContent      = Math.round(totalExp * 100) / 100;
   document.getElementById("totalEarnings").textContent = Math.round(totalEarnings).toLocaleString();
 }

@@ -201,9 +201,6 @@ function listenToEntries() {
   );
 
   unsubscribe = onSnapshot(q, (snap) => {
-    console.log("Snapshot received. Doc count:", snap.docs.length);
-    console.log("Current user UID:", currentUser.uid);
-    snap.docs.forEach(d => console.log("Doc ID:", d.id, "Data:", JSON.stringify(d.data())));
     cachedEntries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderEntries(cachedEntries);
   }, (err) => {
@@ -218,16 +215,20 @@ function renderEntries(entries) {
   const empty = document.getElementById("emptyState");
   const tbody = document.getElementById("daycareBody");
 
-  // Active first by sortOrder, then returned
-  const active   = entries.filter(e => !e.returned).sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
-  const returned = entries.filter(e => e.returned).sort((a, b) => a.date.localeCompare(b.date));
+  // Active first by sortOrder (old entries without it sort to end), then returned
+  const active   = entries.filter(e => !e.returned).sort((a, b) => {
+    const sa = (a.sortOrder !== undefined && a.sortOrder !== null) ? a.sortOrder : 99999;
+    const sb = (b.sortOrder !== undefined && b.sortOrder !== null) ? b.sortOrder : 99999;
+    return sa - sb;
+  });
+  const returned = entries.filter(e => e.returned).sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   const sorted   = [...active, ...returned];
 
   empty.classList.toggle("hidden", entries.length > 0);
   tbody.innerHTML = "";
 
   sorted.forEach((entry, idx) => {
-    const entryRate = entry.entryRate || currentRate;
+    const entryRate = (entry.entryRate != null && entry.entryRate > 0) ? entry.entryRate : (entry.rate || currentRate);
     const price     = Math.round(entry.expKk * entryRate * 100) / 100;
     const isActive = !entry.returned;
     const tr       = document.createElement("tr");
@@ -259,11 +260,11 @@ function renderEntries(entries) {
           data-exp="${entry.expKk}"
           data-rate="${entryRate}"
           data-price="${price}"
-          ${entry.completed ? "checked" : ""}
+          ${entry.completed === true ? "checked" : ""}
           title="Mark as complete" />
       </td>
       <td class="no-strike">
-        <button class="btn-notify ${entry.completed ? "" : "hidden"}" data-id="${entry.id}"
+        <button class="btn-notify ${entry.completed === true ? "" : "hidden"}" data-id="${entry.id}"
           data-username="${escHtml(entry.username)}"
           data-discord="${escHtml(entry.discord)}"
           data-pokemon="${escHtml(entry.pokemon)}"
@@ -393,7 +394,7 @@ function setupDragAndDrop() {
 function updateTotals(entries) {
   const active        = entries.filter(e => !e.returned);
   const totalExp      = active.reduce((sum, e) => sum + (e.expKk || 0), 0);
-  const totalEarnings = active.reduce((sum, e) => sum + (e.expKk * (e.entryRate || currentRate)), 0);
+  const totalEarnings = active.reduce((sum, e) => sum + (e.expKk * ((e.entryRate != null && e.entryRate > 0) ? e.entryRate : (e.rate || currentRate))), 0);
   document.getElementById("totalEntries").textContent  = active.length;
   document.getElementById("totalExp").textContent      = Math.round(totalExp * 100) / 100;
   document.getElementById("totalEarnings").textContent = Math.round(totalEarnings).toLocaleString();

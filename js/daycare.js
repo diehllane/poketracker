@@ -47,7 +47,6 @@ let currentRate   = 15;
 let unsubscribe   = null;
 let cachedEntries = [];
 let dragSrcId     = null;
-let webhookUrl    = "";
 
 // ─── Auth guard ───────────────────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
@@ -107,7 +106,6 @@ async function loadUserRate() {
     const snap = await getDoc(doc(db, "users", currentUser.uid));
     if (snap.exists()) {
       if (snap.data().daycareRate) currentRate = snap.data().daycareRate;
-      if (snap.data().webhookUrl) webhookUrl = snap.data().webhookUrl;
     }
   } catch {}
   document.getElementById("rateDisplay").textContent = currentRate + "k";
@@ -420,42 +418,93 @@ function updateTotals(entries) {
   document.getElementById("totalEarnings").textContent = Math.round(totalEarnings).toLocaleString();
 }
 
-// ─── Discord Webhook ──────────────────────────────────────────────────────────
+// ─── Discord DM Notification ─────────────────────────────────────────────────
 async function sendDiscordNotification(data) {
-  if (!webhookUrl) {
-    alert("No Discord webhook URL configured.\nGo to the Dashboard → Account Settings to add your webhook URL.");
-    return;
-  }
+  const message = [
+    "✅ **Daycare Complete!**",
+    "",
+    `**Trainer:** ${data.username}`,
+    `**Discord:** ${data.discord}`,
+    `**Pokémon:** ${data.pokemon}`,
+    `**Levels:** ${data["level-start"]} → ${data["level-finish"]}`,
+    `**Total EXP:** ${data.exp} kk`,
+    `**Rate:** ${data.rate} k per 1kk EXP`,
+    `**Final Price:** ${Number(data.price).toLocaleString()} k`,
+  ].join("\n");
 
-  const embed = {
-    title: "✅ Daycare Complete",
-    color: 0xe8c84a,
-    fields: [
-      { name: "In-Game Username", value: data.username,                   inline: true  },
-      { name: "Discord",          value: data.discord,                    inline: true  },
-      { name: "Pokémon",          value: data.pokemon,                    inline: true  },
-      { name: "Levels",           value: `${data.levelStart} → ${data.levelFinish}`, inline: true },
-      { name: "Total EXP",        value: `${data.exp} kk`,               inline: true  },
-      { name: "Rate",             value: `${data.rate} k per 1kk EXP`,   inline: true  },
-      { name: "Final Price",      value: `${Number(data.price).toLocaleString()} k`, inline: false },
-    ],
-    timestamp: new Date().toISOString()
-  };
-
+  // Copy message to clipboard
   try {
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ embeds: [embed] })
-    });
-    if (res.ok) {
-      alert("Notification sent to Discord!");
-    } else {
-      alert("Discord returned an error. Check your webhook URL.");
-    }
+    await navigator.clipboard.writeText(message);
   } catch (err) {
-    alert("Failed to send notification: " + err.message);
+    // Clipboard API not available (some mobile browsers) — skip silently
+    console.warn("Clipboard write failed:", err);
   }
+
+  // Show a modal with the message and open Discord
+  showNotifyModal(message, data.discord);
+}
+
+function showNotifyModal(message, discordName) {
+  // Remove any existing modal
+  document.getElementById("notifyModal")?.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "notifyModal";
+  modal.className = "modal";
+  modal.innerHTML = `
+    <div class="modal-backdrop"></div>
+    <div class="modal-card" style="max-width:520px">
+      <h3>📨 Send to ${escHtml(discordName)}</h3>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">
+        Message copied to clipboard. Open Discord, find <strong>${escHtml(discordName)}</strong>,
+        and paste to send.
+      </p>
+      <textarea id="notifyText" class="notify-textarea" readonly>${escHtml(message)}</textarea>
+      <div id="copyConfirm" class="success-msg" style="margin:8px 0;">✓ Copied to clipboard!</div>
+      <div class="modal-actions">
+        <button id="openDiscordBtn" class="btn-primary">Open Discord</button>
+        <button id="copyAgainBtn" class="btn-secondary">Copy Again</button>
+        <button id="closeNotifyBtn" class="btn-ghost">Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Open Discord — tries app deep link, falls back to web
+  document.getElementById("openDiscordBtn").addEventListener("click", () => {
+    // discord:// deep link works on Windows, macOS, iOS, Android if app is installed
+    // Falls back to browser after 1.5s if app doesn't open
+    const appLink = "discord://";
+    const webLink = "https://discord.com/channels/@me";
+
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = appLink;
+    document.body.appendChild(iframe);
+
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+      // Only open web fallback if page is still visible (app didn't take over)
+      if (!document.hidden) window.open(webLink, "_blank");
+    }, 1500);
+  });
+
+  // Copy again button
+  document.getElementById("copyAgainBtn").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(message);
+      document.getElementById("copyConfirm").textContent = "✓ Copied again!";
+    } catch {
+      // Select the textarea text as fallback
+      document.getElementById("notifyText").select();
+      document.execCommand("copy");
+      document.getElementById("copyConfirm").textContent = "✓ Copied!";
+    }
+  });
+
+  // Close
+  document.getElementById("closeNotifyBtn").addEventListener("click", () => modal.remove());
+  modal.querySelector(".modal-backdrop").addEventListener("click", () => modal.remove());
 }
 
 function escHtml(str) {

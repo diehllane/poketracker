@@ -29,7 +29,6 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   setupPasswordChange();
-  setupWebhook();
 });
 
 // ─── Logout ───────────────────────────────────────────────────────────────────
@@ -110,68 +109,6 @@ function setupPasswordChange() {
 
     submitBtn.disabled = false;
     submitBtn.textContent = "Update Password";
-  });
-}
-
-// ─── Webhook URL ──────────────────────────────────────────────────────────────
-async function setupWebhook() {
-  // Load existing webhook URL for this user
-  try {
-    const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
-    if (snap.exists() && snap.data().webhookUrl) {
-      document.getElementById("webhookUrl").value = snap.data().webhookUrl;
-    }
-  } catch {}
-
-  const toggleBtn = document.getElementById("webhookBtn");
-  const formEl    = document.getElementById("webhookForm");
-  const cancelBtn = document.getElementById("cancelWebhook");
-  const submitBtn = document.getElementById("submitWebhook");
-  const errEl     = document.getElementById("webhookError");
-  const successEl = document.getElementById("webhookSuccess");
-
-  toggleBtn.addEventListener("click", () => {
-    formEl.classList.toggle("hidden");
-    errEl.classList.add("hidden");
-    successEl.classList.add("hidden");
-  });
-
-  cancelBtn.addEventListener("click", () => formEl.classList.add("hidden"));
-
-  submitBtn.addEventListener("click", async () => {
-    errEl.classList.add("hidden");
-    successEl.classList.add("hidden");
-
-    const url = document.getElementById("webhookUrl").value.trim();
-    if (!url) {
-      errEl.textContent = "Please enter a webhook URL.";
-      errEl.classList.remove("hidden");
-      return;
-    }
-    if (!url.startsWith("https://discord.com/api/webhooks/") && !url.startsWith("https://discordapp.com/api/webhooks/")) {
-      errEl.textContent = "That doesn't look like a Discord webhook URL.";
-      errEl.classList.remove("hidden");
-      return;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Saving…";
-
-    try {
-      await setDoc(doc(db, "users", auth.currentUser.uid), { webhookUrl: url }, { merge: true });
-      successEl.textContent = "Webhook URL saved!";
-      successEl.classList.remove("hidden");
-      setTimeout(() => {
-        formEl.classList.add("hidden");
-        successEl.classList.add("hidden");
-      }, 2500);
-    } catch (err) {
-      errEl.textContent = "Failed to save: " + err.message;
-      errEl.classList.remove("hidden");
-    }
-
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Save Webhook";
   });
 }
 
